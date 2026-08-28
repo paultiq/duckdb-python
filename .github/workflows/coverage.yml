@@ -61,11 +61,11 @@ jobs:
           git fetch origin
           git checkout ${{ inputs.duckdb_git_ref }}
 
-      - name: Install Ccache
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install ccache
+      - name: Setup Ccache
+        uses: ./.github/actions/ccache-action
+        with:
+          key: coverage_x86_64
+          save: 'true'
 
       - name: Install Astral UV and enable the cache
         uses: astral-sh/setup-uv@v10.0.1
