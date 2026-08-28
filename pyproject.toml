@@ -525,7 +525,8 @@ manylinux-pypy_aarch64-image = "manylinux_2_28"
 before-build = ['if [ -x "${CCACHE_BIN:-}" ]; then install -m 755 "$CCACHE_BIN" /usr/local/bin/ccache; else curl -fsSL "https://github.com/ccache/ccache/releases/download/v4.13.6/ccache-4.13.6-linux-$(uname -m)-musl-static.tar.gz" | tar -xz -C /usr/local/bin --strip-components=1 --wildcards "*/ccache"; fi']
 
 [tool.cibuildwheel.macos]
-before-build = ["brew install ccache"]
+# install ccache only if not installed
+before-build = ['command -v ccache >/dev/null 2>&1 || brew install ccache']
 # nanobind uses C++17 aligned new/delete (std::align_val_t), which the runtime only provides on macOS 10.13+.
 # cp311's framework defaults to a 10.9 deployment target (used for the x86_64 slice of x86_64/universal2
 # wheels), so nanobind fails to compile there; cp312+ frameworks already target 10.13+. Pin 10.14 so every CPython
@@ -533,4 +534,5 @@ before-build = ["brew install ccache"]
 environment = { MACOSX_DEPLOYMENT_TARGET = "10.14" }
 
 [tool.cibuildwheel.windows]
-before-build = ["choco install ccache"]
+# install ccache only if not installed
+before-build = ['where ccache >nul 2>&1 || choco install ccache -y']
