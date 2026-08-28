@@ -138,7 +138,7 @@ runs:
     # Install Astral UV, which will be used as build-frontend for cibuildwheel
     - uses: astral-sh/setup-uv@v7
       with:
-        version: "0.9.0"
+        version: "0.12.7"
         enable-cache: false
 
     ### cibuildwheel configuration
