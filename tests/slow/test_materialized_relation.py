@@ -46,7 +46,8 @@ class TestMaterializedRelationSlow:
 
         rel = duckdb_cursor.sql(query)
         projection = rel.select("column0")
-        assert projection.fetchall() == [(42,) for _ in range(num_rows)]
+
+        assert projection.aggregate("count(*), min(column0), max(column0)").fetchone() == (num_rows, 42, 42)
 
         filtered = rel.filter("column1 != 'test'")
         assert filtered.fetchall() == []
