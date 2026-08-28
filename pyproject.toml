@@ -515,8 +515,7 @@ indent-style = "space"
 # (to some extent).
 ######################################################################################################
 [tool.cibuildwheel]
-# --env-dir needs build>=1.6.0
-dependency-versions = { packages = ["build>=1.6.0"] }
+dependency-versions = "latest"
 build-frontend = "build[uv]"
 # On fatal signal, emit stack
 test-environment = { PYTHONFAULTHANDLER = "1" }
@@ -529,6 +528,7 @@ manylinux-pypy_aarch64-image = "manylinux_2_28"
 build-frontend = { name = "build[uv]", args = ["--env-dir", "/tmp/duckdb-build-env"] }
 # Reuses (or curls) CCACHE_BIN. Faster than EPEL install. 
 before-build = [
+  'pip install -U "build>=1.6.0"',
   'rm -rf /tmp/duckdb-build-env',
   'if [ -x "${CCACHE_BIN:-}" ]; then install -m 755 "$CCACHE_BIN" /usr/local/bin/ccache; else curl -fsSL "https://github.com/ccache/ccache/releases/download/v4.13.6/ccache-4.13.6-linux-$(uname -m)-musl-static.tar.gz" | tar -xz -C /usr/local/bin --strip-components=1 --wildcards "*/ccache"; fi',
 ]
@@ -550,6 +550,6 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "10.14" }
 build-frontend = { name = "build[uv]", args = ["--env-dir", "C:/duckdb-build-env"] }
 # install ccache only if not installed
 before-build = [
-  'if exist C:\duckdb-build-env rmdir /s /q C:\duckdb-build-env',
+  'if exist C:\duckdb-build-env (rmdir /s /q C:\duckdb-build-env)',
   'where ccache >nul 2>&1 || choco install ccache -y',
 ]
