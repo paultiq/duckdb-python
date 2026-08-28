@@ -164,7 +164,7 @@ runs:
           uv export --only-group test --no-emit-project  --quiet --output-file pylock.toml --directory {project} &&
           uv pip install -r pylock.toml
         CIBW_TEST_COMMAND: >
-          uv run -v pytest --confcutdir=. --rootdir . -c {project}/pyproject.toml -n 2 --dist worksteal --durations=50 ${{ inputs.testsuite == 'fast' && './tests/fast' || './tests' }}
+          uv run -v pytest --confcutdir=. --rootdir . -c {project}/pyproject.toml -n auto --dist worksteal --durations=50 ${{ inputs.testsuite == 'fast' && './tests/fast' || './tests' }}
 
     - name: Upload wheel
       uses: actions/upload-artifact@v4
