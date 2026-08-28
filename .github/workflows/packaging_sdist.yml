@@ -35,6 +35,8 @@ jobs:
   build_sdist:
     name: Build sdist
     runs-on: ubuntu-24.04
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     outputs:
       pkg_version: ${{ steps.versioning.outputs.pkg_version }}
       duckdb_version: ${{ steps.versioning.outputs.duckdb_version }}
@@ -69,6 +71,16 @@ jobs:
             echo "OVERRIDE_DUCKDB_GIT_DESCRIBE=${SET_DUCKDB_VERSION}" >> $GITHUB_ENV
           fi
 
+      # The sdist build compiles all of DuckDB and had no caching at all.
+      # setup_compiler_launcher_if_available() in CMakeLists.txt finds ccache on
+      # PATH by itself, so installing it is enough. Rides the manylinux_x86_64
+      # seed cache read-only; seeds stay the only writers.
+      - name: Setup Ccache
+        uses: ./.github/actions/ccache-action
+        with:
+          key: manylinux_x86_64
+          save: 'false'
+
       - name: Install Astral UV
         uses: astral-sh/setup-uv@v10.0.1
         with:
@@ -94,7 +106,7 @@ jobs:
           # run tests
           tests_root="${{ github.workspace }}/tests"
           tests_dir="${tests_root}${{ inputs.testsuite == 'fast' && '/fast' || '/' }}"
-          uv run --verbose pytest -c ${{ github.workspace }}/pyproject.toml $tests_dir
+          uv run --verbose pytest -n 2 -c ${{ github.workspace }}/pyproject.toml $tests_dir
 
       # Reads both versions back out of the installed sdist and fails if they are
       # not what was asked for. This is the only place that proves a forced version
