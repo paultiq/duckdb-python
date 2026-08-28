@@ -1,5 +1,4 @@
 import math
-from pathlib import Path
 
 import pytest
 
@@ -196,7 +195,7 @@ class TestH2OAIArrow:
 
 
 @pytest.fixture(scope="module")
-def arrow_dataset_register():
+def arrow_dataset_register(tmp_path_factory):
     """Single fixture to download files and register them on the given connection."""
     session = requests.Session()
     retries = urllib3_util.Retry(
@@ -214,13 +213,14 @@ def arrow_dataset_register():
         respect_retry_after_header=True,  # respect Retry-After headers
     )
     session.mount("https://", requests_adapters.HTTPAdapter(max_retries=retries))
+    download_dir = tmp_path_factory.mktemp("h2oai_data")
     saved_filepaths = set()
 
     def _register(url, filename, con, tablename) -> None:
         r = session.get(url)
-        filepath = Path(filename)
+        filepath = download_dir / filename
         filepath.write_bytes(r.content)
-        con.register(tablename, read_csv(filename))
+        con.register(tablename, read_csv(str(filepath)))
         saved_filepaths.add(filepath)
 
     yield _register
