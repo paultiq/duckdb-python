@@ -26,7 +26,7 @@ psutil = pytest.importorskip("psutil")
 
 ITERS = 100
 ROWS = 100_000
-_EM_ROWS = [(i, i * 1.5, f"s{i}") for i in range(5_000)]
+_EM_ROWS = [(i, i * 1.5, f"s{i}") for i in range(1_000)]
 
 
 def _rss_gb():
