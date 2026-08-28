@@ -547,7 +547,7 @@ before-build = [
 environment = { MACOSX_DEPLOYMENT_TARGET = "10.14" }
 
 [tool.cibuildwheel.windows]
-build-frontend = { name = "build[uv]", args = ["--env-dir", "C:/duckdb-build-env"] }
+build-frontend = { name = "build", args = ["--env-dir", "C:/duckdb-build-env"] }
 # install ccache only if not installed
 before-build = [
   'if exist C:\duckdb-build-env (rmdir /s /q C:\duckdb-build-env)',
