@@ -29,6 +29,10 @@ inputs:
     description: 'Force the DuckDB version, passed to the build as OVERRIDE_DUCKDB_GIT_DESCRIBE'
     required: false
     default: ''
+  ccache-version:
+    description: 'ccache version staged into the manylinux container'
+    required: false
+    default: '4.13.6'
   ccache-save:
     description: >
       Save the ccache at job end. Only the seed jobs save, so each platform has
@@ -81,7 +85,7 @@ runs:
         # Every override has to ride along on that single CIBW_ENVIRONMENT line,
         # or it never reaches the build inside the container.
         if [[ "${{ inputs.cibw-system }}" == "manylinux" ]]; then
-          echo "CIBW_ENVIRONMENT=CCACHE_DIR=/host${{ github.workspace }}/.ccache${overrides}" >> $GITHUB_ENV
+          echo "CIBW_ENVIRONMENT=CCACHE_DIR=/host${{ github.workspace }}/.ccache CCACHE_BIN=/host${{ github.workspace }}/.ccache-bin/ccache${overrides}" >> $GITHUB_ENV
         else
           for override in ${overrides}; do
             echo "${override}" >> $GITHUB_ENV
@@ -102,6 +106,34 @@ runs:
       with:
         key: ${{ inputs.cibw-system }}_${{ inputs.arch }}
         save: ${{ inputs.ccache-save }}
+
+    # ccache is not in AlmaLinux 8's own repos, only EPEL, and refreshing EPEL metadata inside the
+    # container cost 180s per job to fetch a 232 kB package that was ccache 3.7.7 (2019). Stage the
+    # current static binary on the host instead: cibw already mounts the host at /host, so the
+    # container's before-build just copies it into place. musl-static, not glibc, so a symbol version
+    # cannot go missing against the container's glibc 2.28.
+    - name: Restore the staged ccache binary
+      if: ${{ inputs.cibw-system == 'manylinux' }}
+      id: ccache-bin-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.ccache-bin
+        key: ccache-bin-${{ inputs.ccache-version }}-${{ inputs.arch }}
+
+    - name: Stage the ccache binary for the container
+      if: ${{ inputs.cibw-system == 'manylinux' && steps.ccache-bin-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      env:
+        CCACHE_BIN_DIR: ${{ github.workspace }}/.ccache-bin
+        CCACHE_VERSION: ${{ inputs.ccache-version }}
+        CCACHE_ARCH: ${{ inputs.arch }}
+      run: |
+        set -euo pipefail
+        mkdir -p "${CCACHE_BIN_DIR}"
+        url="https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}-musl-static.tar.gz"
+        curl -fsSL "${url}" | tar -xz -C "${CCACHE_BIN_DIR}" --strip-components=1 --wildcards '*/ccache'
+        chmod +x "${CCACHE_BIN_DIR}/ccache"
+        "${CCACHE_BIN_DIR}/ccache" --version | head -1
 
     # Install Astral UV, which will be used as build-frontend for cibuildwheel
     - uses: astral-sh/setup-uv@v7

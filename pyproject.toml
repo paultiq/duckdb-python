@@ -521,7 +521,8 @@ manylinux-aarch64-image = "manylinux_2_28"
 manylinux-pypy_aarch64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
-before-build = ["yum install -y ccache"]
+# Reuses (or curls) CCACHE_BIN. Faster than EPEL install. 
+before-build = ['if [ -x "${CCACHE_BIN:-}" ]; then install -m 755 "$CCACHE_BIN" /usr/local/bin/ccache; else curl -fsSL "https://github.com/ccache/ccache/releases/download/v4.13.6/ccache-4.13.6-linux-$(uname -m)-musl-static.tar.gz" | tar -xz -C /usr/local/bin --strip-components=1 --wildcards "*/ccache"; fi']
 
 [tool.cibuildwheel.macos]
 before-build = ["brew install ccache"]
