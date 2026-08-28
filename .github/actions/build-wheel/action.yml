@@ -136,10 +136,10 @@ runs:
         "${CCACHE_BIN_DIR}/ccache" --version | head -1
 
     # Install Astral UV, which will be used as build-frontend for cibuildwheel
-    - uses: astral-sh/setup-uv@v7
+    - uses: astral-sh/setup-uv@v10.0.1
       with:
         version: "0.12.7"
-        enable-cache: false
+        enable-cache: "auto"
 
     ### cibuildwheel configuration
     #
