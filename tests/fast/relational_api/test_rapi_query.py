@@ -7,12 +7,10 @@ import duckdb
 
 
 @pytest.fixture
-def tbl_table():
-    con = duckdb.default_connection()
-    con.execute("drop table if exists tbl CASCADE")
-    con.execute("create table tbl (i integer)")
-    yield
-    con.execute("drop table tbl CASCADE")
+def tbl_table(duckdb_cursor):
+    """Return a connection holding an empty 'tbl', so nothing lands in the default connection."""
+    duckdb_cursor.execute("create table tbl (i integer)")
+    return duckdb_cursor
 
 
 @pytest.fixture
@@ -27,8 +25,8 @@ def scoped_default(duckdb_cursor):
 
 class TestRAPIQuery:
     @pytest.mark.parametrize("steps", [1, 2, 3, 4])
-    def test_query_chain(self, steps):
-        con = duckdb.default_connection()
+    def test_query_chain(self, duckdb_cursor, steps):
+        con = duckdb_cursor
         amount = 1000000
         rel = None
         for _ in range(steps):
@@ -53,7 +51,7 @@ class TestRAPIQuery:
 
     @pytest.mark.parametrize("input", [[5, 4, 3], [], [1000]])
     def test_query_table(self, tbl_table, input):
-        con = duckdb.default_connection()
+        con = tbl_table
         rel = con.table("tbl")
         for row in input:
             rel.insert([row])
@@ -63,7 +61,7 @@ class TestRAPIQuery:
         assert result.fetchall() == [(x,) for x in input]
 
     def test_query_table_basic(self, tbl_table):
-        con = duckdb.default_connection()
+        con = tbl_table
         rel = con.table("tbl")
         # Querying a table relation
         rel = rel.query("x", "select 5")
@@ -71,7 +69,7 @@ class TestRAPIQuery:
         assert result.fetchall() == [(5,)]
 
     def test_query_table_qualified(self, duckdb_cursor):
-        con = duckdb.default_connection()
+        con = duckdb_cursor
         con.execute("create schema fff")
 
         # Create table in fff schema
@@ -79,7 +77,7 @@ class TestRAPIQuery:
         assert con.table("fff.t2").fetchall() == [(1,)]
 
     def test_query_insert_into_relation(self, tbl_table):
-        con = duckdb.default_connection()
+        con = tbl_table
         rel = con.query("select i from range(1000) tbl(i)")
         # Can't insert into this, not a table relation
         with pytest.raises(duckdb.InvalidInputException):
@@ -104,7 +102,7 @@ class TestRAPIQuery:
             rel.query("relation", "create table tbl as select * from not_a_valid_view")
 
     def test_query_table_unrelated(self, tbl_table):
-        con = duckdb.default_connection()
+        con = tbl_table
         rel = con.table("tbl")
         # Querying a table relation
         rel = rel.query("x", "select 5")
