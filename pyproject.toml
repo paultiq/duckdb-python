@@ -254,7 +254,8 @@ pandas = [
     { index = "scientific-python-nightly", marker = "python_version >= '3.15'" },
 ]
 pyarrow = [
-    { index = "scientific-python-nightly", marker = "python_version >= '3.15'" },
+    # win/ARM64 has no pyarrow wheels & nightly doesn't have sdist
+    { index = "scientific-python-nightly", marker = "python_version >= '3.15' and (sys_platform != 'win32' or platform_machine != 'ARM64')" },
 ]
 
 # todo: adjust for windows arm64 while test dependencies become available
