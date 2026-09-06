@@ -282,7 +282,9 @@ test = [ # dependencies used for running tests
     "gcovr; sys_platform != 'win32' or platform_machine != 'ARM64'",
     "gcsfs; python_version < '3.15' and (sys_platform != 'win32' or platform_machine != 'ARM64')",
     "packaging",
-    "polars>=1.33.0",
+
+    # polars tests fail on 3.15 due to: https://github.com/pola-rs/polars/issues/28347
+    "polars>=1.33.0; python_version < '3.15'", 
     "psutil",
     "py4j",
     "pyotp",
